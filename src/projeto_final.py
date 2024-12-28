@@ -21,9 +21,13 @@ def hand_keyboard():
 if __name__ == "__main__":
 
     cv2.namedWindow("video", cv2.WINDOW_FREERATIO)
+    #capture = cv2.VideoCapture("src\\20241123_182441.mp4")
     #capture = cv2.VideoCapture("./20241128_111931.mp4")
     #capture = cv2.VideoCapture("./20241123_182441.mp4")
-    capture = cv2.VideoCapture(0)
+    capture = cv2.VideoCapture("src\\20241123_182441.mp4")
+
+
+    #capture = cv2.VideoCapture(0)
     # capture = cv2.VideoCapture("http://192.168.241.75:4747/video")
     #capture = cv2.VideoCapture("http://192.168.1.68:4747/video")
 
@@ -39,8 +43,7 @@ if __name__ == "__main__":
         original_frame = frame.copy()
 
 
-        cv2.imshow("og_gramne", original_frame)
-        cv2.waitKey()
+        #cv2.imshow("og_gramne", original_frame)
 
         cv2.imshow("video", frame)
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -58,27 +61,35 @@ if __name__ == "__main__":
                 continue
             c_c = RubikCustomContour(contour, h, idx, hsv_frame)
             if c_c.is_valid():
-                custom_contours.append(c_c)
-
+                _,_,child, parent = h
+                last_cc_valid  = None
+                while child != -1:
+                    child_cc = RubikCustomContour(contour, h, idx, hsv_frame)
+                    if child_cc.is_valid():
+                        last_cc_valid = child_cc
+                    else:
+                        break
+                    _,_,child, parent = h
+                if last_cc_valid:
+                    custom_contours.append(last_cc_valid)
+                else:
+                    custom_contours.append(c_c)
         
         for c_c in custom_contours:
             frame = c_c.draw_candidate(frame)
 
-        non_overlapping_contours = set()
-        for c_c in custom_contours:
-            for c_c1 in custom_contours:
-                if c_c.is_within_contour(c_c1) and (c_c.get_child() == -1 or c_c1.get_child() == c_c.idx ) :
-                    non_overlapping_contours.add(c_c.idx)
+#       non_overlapping_contours = set()
+#       for c_c in custom_contours:
+#           for c_c1 in custom_contours:
+#               if c_c.is_within_contour(c_c1) and (c_c.get_child() == -1 or c_c1.get_child() == c_c.idx ) :
+#                   non_overlapping_contours.add(c_c.idx)
 
-        
+#       for c in non_overlapping_contours:
+#           c_c_valid =  RubikCustomContour(contours[c], hierarchy[0][c], c, hsv_frame)
+#           frame = c_c_valid.draw_candidate(frame, color=(255,0,0))
+#           print(c, hierarchy[0][c])
 
-        for c in non_overlapping_contours:
-            c_c_valid =  RubikCustomContour(contours[c], hierarchy[0][c], c, hsv_frame)
-            frame = c_c_valid.draw_candidate(frame, color=(255,0,0))
-            print(c, hierarchy[0][c])
-
-        print(non_overlapping_contours)
+        #print(non_overlapping_contours)
         cv2.imshow("video", frame)
         ret, frame = capture.read()
-        frame_count +=1
         hand_keyboard()

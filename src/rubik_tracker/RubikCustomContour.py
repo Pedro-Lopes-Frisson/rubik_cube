@@ -4,7 +4,7 @@ from .utils import get_distance, is_approx, show_line
 
 # Configure the logging system
 logging.basicConfig(
-    level=logging.INFO,  # Set the logging level
+    level=logging.ERROR,  # Set the logging level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],  # Logs to console
 )

@@ -8,8 +8,6 @@ def get_distance(p1, p2):
 
 
 def is_approx(o, o1, thresholdLow=0.9, thresholdHigh=1.1):
-    print(o)
-    print(o1)
     if o * thresholdLow < o1 < o * thresholdHigh:
         return True
     if o1 * thresholdLow < o < o1 * thresholdHigh:
