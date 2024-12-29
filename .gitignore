@@ -1,2 +1,5 @@
 venv
 *pyc
+*.mp4
+*.png
+*.jpg

@@ -20,14 +20,19 @@ def hand_keyboard():
 
 if __name__ == "__main__":
 
+    cv2.namedWindow("Blurred", cv2.WINDOW_FREERATIO)
     cv2.namedWindow("video", cv2.WINDOW_FREERATIO)
-    #capture = cv2.VideoCapture("src\\20241123_182441.mp4")
+    cv2.namedWindow("Canny", cv2.WINDOW_FREERATIO)
+    cv2.namedWindow("dilated", cv2.WINDOW_FREERATIO)
+    cv2.namedWindow("eroded", cv2.WINDOW_FREERATIO)
+
+    #capture = cv2.VideoCapture("src\\20241128_111931.mp4")
     #capture = cv2.VideoCapture("./20241128_111931.mp4")
     #capture = cv2.VideoCapture("./20241123_182441.mp4")
-    capture = cv2.VideoCapture("src\\20241123_182441.mp4")
+    #capture = cv2.VideoCapture("src\\20241123_182441.mp4")
 
 
-    #capture = cv2.VideoCapture(0)
+    capture = cv2.VideoCapture(0)
     # capture = cv2.VideoCapture("http://192.168.241.75:4747/video")
     #capture = cv2.VideoCapture("http://192.168.1.68:4747/video")
 
@@ -67,9 +72,11 @@ if __name__ == "__main__":
                     child_cc = RubikCustomContour(contour, h, idx, hsv_frame)
                     if child_cc.is_valid():
                         last_cc_valid = child_cc
-                    else:
+                    if child == -1:
                         break
-                    _,_,child, parent = h
+                    h_child = hierarchy[0][child]
+                    _,_,child, parent = h_child
+                    
                 if last_cc_valid:
                     custom_contours.append(last_cc_valid)
                 else:
