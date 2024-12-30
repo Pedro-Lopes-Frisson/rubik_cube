@@ -4,7 +4,7 @@ from .utils import get_distance, is_approx, show_line
 
 # Configure the logging system
 logging.basicConfig(
-    level=logging.ERROR,  # Set the logging level
+    level=logging.INFO,  # Set the logging level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],  # Logs to console
 )
@@ -28,6 +28,7 @@ class RubikCustomContour:
         self.cropped_image(hsv_frame)
         self._og_frame = hsv_frame
         self.idx = idx
+        self.contour_color = None
 
     def cropped_image(self, hsv_frame):
         if not self._cropped:
@@ -127,12 +128,19 @@ class RubikCustomContour:
     def get_child(self):
         return self._first_child
 
-    def draw_candidate(self, image, color=(0, 0, 255)):
+    def draw_candidate(self, image, color=(0, 0, 255), thickness = 2 ):
         rect = self.getBbox()
         self.logger.debug(f"Rect to draw {rect}")
+
         return cv2.rectangle(
-            image, self.getBbox(), color, thickness=2, lineType=cv2.LINE_AA
+            image, self.getBbox(), color, thickness=thickness, lineType=cv2.LINE_AA
         )
+    def show_color(self, image, color):
+        x,y,w,h = self.getBbox()
+        origin = (x + w//2, y + h // 2)
+        
+        return cv2.putText(image,self.get_contour_color(), origin, cv2.FONT_HERSHEY_PLAIN, color=color, thickness=2, lineType=cv2.LINE_AA, fontScale=1)
+        
 
     def show_contour(self):
         cv2.imshow("Contour", self._cropped)
@@ -148,8 +156,11 @@ class RubikCustomContour:
             it has 4 points
             the 4 angles are somewhere between 85 degrees and 95
             the length of every side is approximately the same lenght has the biggest side
+            square areas cannot exceed 1/5 of the image
         """
-        if self._area < 1000 or self._area > 40000:
+
+        imgw,imgh,_ = self._og_frame.shape
+        if self._area < 1000 or self._area >  3 * ( imgw*imgh // 9 ) :
             self.logger.info(f"Contour was too smal or too big {self._area}")
             return False
 
@@ -197,12 +208,12 @@ class RubikCustomContour:
         x_r, y_r, width, height = self.getBbox()
 
         reference_pos_x, reference_pos_y = (x_r + (width // 2), y_r + (height // 2))
-        hsv_px = hsv_frame[reference_pos_y, reference_pos_x]
-
-        if 0 <= hsv_px[1] < 35:
+        hsv_px = self._og_frame[reference_pos_y, reference_pos_x]
+        self.contour_color = " "
+        if 0 <= hsv_px[1] < 45:
             self.contour_color = "White"
 
-        if 0 < hsv_px[0] < 7 or 170 < hsv_px[0] <= 179:
+        if 0 < hsv_px[0] < 5 or 170 < hsv_px[0] <= 179:
             self.contour_color = "RED"
 
         if 7 < hsv_px[0] < 20:
@@ -216,7 +227,7 @@ class RubikCustomContour:
 
         if 85 < hsv_px[0] < 115:
             self.contour_color = "Blue"
-        self.contour_color = " "
+        return self.contour_color
 
     def __str__(self):
         return f"Custom Contour {self.s_contour} color: {self.contour_color} at {self.get_center()}"

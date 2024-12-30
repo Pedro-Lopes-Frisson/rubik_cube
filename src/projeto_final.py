@@ -26,7 +26,7 @@ if __name__ == "__main__":
     cv2.namedWindow("dilated", cv2.WINDOW_FREERATIO)
     cv2.namedWindow("eroded", cv2.WINDOW_FREERATIO)
 
-    #capture = cv2.VideoCapture("src\\20241128_111931.mp4")
+    capture = cv2.VideoCapture("src\\20241128_111931.mp4")
     #capture = cv2.VideoCapture("./20241128_111931.mp4")
     #capture = cv2.VideoCapture("./20241123_182441.mp4")
     #capture = cv2.VideoCapture("src\\20241123_182441.mp4")
@@ -57,44 +57,49 @@ if __name__ == "__main__":
 
         canny = apply_canny_detection(frame)
         dilated_canny = dilate_contours(canny)
-        contours, hierarchy = cv2.findContours(dilated_canny, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
+        contours, hierarchy = cv2.findContours(dilated_canny, cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+        if hierarchy is None:
+            hierarchy=[[]]
         custom_contours = []
         indices =  range(len(contours) +1 )
         for idx, contour, h in zip(indices,contours,hierarchy[0]):
-            if not( contour.shape[0]> 4):
-                continue
             c_c = RubikCustomContour(contour, h, idx, hsv_frame)
+            custom_contours.append(c_c)
+        
+        for c_c in custom_contours:
             if c_c.is_valid():
-                _,_,child, parent = h
-                last_cc_valid  = None
+                frame = c_c.draw_candidate(frame, color=(255,0,0), thickness=3 )
+            else:
+                frame =  c_c.draw_candidate(frame, color=(0,0,255), thickness=4 )
+        
+        remove_duplicates = set()
+        for c_c in custom_contours:
+            if not c_c.is_valid() or any([c_c.is_within_contour(c)  for c in remove_duplicates]):
+                continue
+            last_cc_valid  = c_c
+            if c_c.get_child() != -1:
+                _,_,child, parent = hierarchy[0][c_c.idx]
                 while child != -1:
-                    child_cc = RubikCustomContour(contour, h, idx, hsv_frame)
+                    child_cc = custom_contours[child]
                     if child_cc.is_valid():
                         last_cc_valid = child_cc
                     if child == -1:
                         break
                     h_child = hierarchy[0][child]
                     _,_,child, parent = h_child
-                    
-                if last_cc_valid:
-                    custom_contours.append(last_cc_valid)
-                else:
-                    custom_contours.append(c_c)
+            
+            last_cc_valid.draw_candidate(frame, color=(0,255,0), thickness = 2)
+            last_cc_valid.show_color(frame, color=(255,100,100))
+            remove_duplicates.add(last_cc_valid)
         
-        for c_c in custom_contours:
-            frame = c_c.draw_candidate(frame)
-
-#       non_overlapping_contours = set()
-#       for c_c in custom_contours:
-#           for c_c1 in custom_contours:
-#               if c_c.is_within_contour(c_c1) and (c_c.get_child() == -1 or c_c1.get_child() == c_c.idx ) :
-#                   non_overlapping_contours.add(c_c.idx)
-
 #       for c in non_overlapping_contours:
 #           c_c_valid =  RubikCustomContour(contours[c], hierarchy[0][c], c, hsv_frame)
 #           frame = c_c_valid.draw_candidate(frame, color=(255,0,0))
 #           print(c, hierarchy[0][c])
+
+        
+
+
 
         #print(non_overlapping_contours)
         cv2.imshow("video", frame)
