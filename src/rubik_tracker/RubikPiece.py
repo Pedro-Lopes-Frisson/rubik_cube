@@ -12,8 +12,8 @@ class RubikPiece:
             "Y": "D",
             "O": "B",
             "B": "R",
-            "-": "-", # uninitialized state
-            "U": "-", # Bad color
+            "-": "-",  # uninitialized state
+            "U": "-",  # Bad color
         }
 
     def get_kociemba(self):
@@ -28,16 +28,12 @@ class RubikPiece:
     def __gt__(self, o):
         center_x1, center_y1 = self.center
         center_x2, center_y2 = o.center
-        y_threshold = 10
-
-        return (center_y1 > center_y2 + 10, center_x1 > center_x2)
+        return (center_y1, center_x1) > (center_y2, center_x2)
 
     def __lt__(self, o):
         center_x1, center_y1 = self.center
         center_x2, center_y2 = o.center
-        y_threshold = 10
-
-        return (center_y2 > center_y1 + 10, center_x2 > center_x1)
+        return (center_y1, center_x1) < (center_y2, center_x2)
 
     def __str__(self):
         return f"{self.center=:} with color {self.color}"
