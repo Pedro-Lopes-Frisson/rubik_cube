@@ -1,10 +1,11 @@
 import cv2
 import logging
-from .utils import get_distance, is_approx, show_line
+from .utils import get_distance, is_approx, show_line, get_color
+import numpy as np
 
 # Configure the logging system
 logging.basicConfig(
-    level=logging.INFO,  # Set the logging level
+    level=logging.ERROR,  # Set the logging level
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],  # Logs to console
 )
@@ -22,6 +23,7 @@ class RubikCustomContour:
         self.bBox = None
         self._cropped = None
         self._roi = None
+        self._area = None
         self.simplify_contour()
         self.get_center()
         self.getBbox()
@@ -29,6 +31,7 @@ class RubikCustomContour:
         self._og_frame = hsv_frame
         self.idx = idx
         self.contour_color = None
+        self._is_valid = None
 
     def cropped_image(self, hsv_frame):
         if not self._cropped:
@@ -65,16 +68,16 @@ class RubikCustomContour:
         sorted_corners = self.s_contour.copy()
         for point in self.s_contour:
             i = point[0]
-            if i[0] < center [0]:
+            if i[0] < center[0]:
                 if i[1] < center[1]:
                     sorted_corners[0] = i
-            if i[0] < center [0]:
+            if i[0] < center[0]:
                 if i[1] > center[1]:
                     sorted_corners[1] = i
-            if i[0] > center [0]:
+            if i[0] > center[0]:
                 if i[1] < center[1]:
                     sorted_corners[2] = i
-            if i[0] > center [0]:
+            if i[0] > center[0]:
                 if i[1] > center[1]:
                     sorted_corners[3] = i
 
@@ -84,7 +87,7 @@ class RubikCustomContour:
 
     def simplify_contour(self) -> None:
         peri = cv2.arcLength(self.original_contour, True)
-        approx = cv2.approxPolyDP(self.original_contour, 0.1 * peri, True)
+        approx = cv2.approxPolyDP(self.original_contour, 0.04 * peri, True)
         self.s_contour = approx
         self.logger.debug(
             f"Original {self.original_contour}\t Approxed {self.s_contour}"
@@ -109,7 +112,15 @@ class RubikCustomContour:
     def getBbox(self):
         if not self.bBox:
             self.bBox = cv2.boundingRect(self.s_contour)
+            self._area = self.bBox[2] * self.bBox[3]
         return self.bBox
+
+    def get_area(self):
+        if not self._area:
+            self.bBox = cv2.boundingRect(self.s_contour)
+            self._area = self.bBox[2] * self.bBox[3]
+
+        return self._area
 
     def is_within_contour(self, c):
         # get contours bbox
@@ -128,19 +139,28 @@ class RubikCustomContour:
     def get_child(self):
         return self._first_child
 
-    def draw_candidate(self, image, color=(0, 0, 255), thickness = 2 ):
+    def draw_candidate(self, image, color=(0, 0, 255), thickness=2):
         rect = self.getBbox()
         self.logger.debug(f"Rect to draw {rect}")
 
         return cv2.rectangle(
             image, self.getBbox(), color, thickness=thickness, lineType=cv2.LINE_AA
         )
+
     def show_color(self, image, color):
-        x,y,w,h = self.getBbox()
-        origin = (x + w//2, y + h // 2)
-        
-        return cv2.putText(image,self.get_contour_color(), origin, cv2.FONT_HERSHEY_PLAIN, color=color, thickness=2, lineType=cv2.LINE_AA, fontScale=1)
-        
+        x, y, w, h = self.getBbox()
+        origin = (x + w // 2, y + h // 2)
+
+        return cv2.putText(
+            image,
+            self.get_contour_color(),
+            origin,
+            cv2.FONT_HERSHEY_PLAIN,
+            color=color,
+            thickness=2,
+            lineType=cv2.LINE_AA,
+            fontScale=1,
+        )
 
     def show_contour(self):
         cv2.imshow("Contour", self._cropped)
@@ -158,18 +178,17 @@ class RubikCustomContour:
             the length of every side is approximately the same lenght has the biggest side
             square areas cannot exceed 1/5 of the image
         """
+        if self._is_valid:
+            return self._is_valid
 
-        imgw,imgh,_ = self._og_frame.shape
-        if self._area < 1000 or self._area >  3 * ( imgw*imgh // 9 ) :
-            self.logger.info(f"Contour was too smal or too big {self._area}")
-            return False
+        imgw, imgh, _ = self._og_frame.shape
 
-        
         self.logger.info(f"Contour had shape {self.s_contour.shape}")
         if self.s_contour.shape != (4, 1, 2):
             self.logger.info(
                 f"Contour had shape {self.s_contour.shape} and is not valid"
             )
+            self._is_valid = False
             return False
 
         self.order_contour_points()
@@ -188,45 +207,27 @@ class RubikCustomContour:
 
         biggest_side = max(AB, AC, DB, DC)
         if not (
-            is_approx(AB, biggest_side, 0.8, 1.3)
-            and is_approx(AC, biggest_side, 0.8, 1.3)
-            and is_approx(DB, biggest_side, 0.8, 1.3)
-            and is_approx(DC, biggest_side, 0.8, 1.3)
+            is_approx(AB, biggest_side, 0.9, 1.1)
+            and is_approx(AC, biggest_side, 0.9, 1.1)
+            and is_approx(DB, biggest_side, 0.9, 1.1)
+            and is_approx(DC, biggest_side, 0.9, 1.1)
         ):
             self.logger.info("Sizes where too different")
+            self._is_valid = False
             return False
 
         # get angles
 
         self.logger.info("Sizes where Correct")
+        self._is_valid = True
         return True
 
     def get_contour_color(self):
         if self.contour_color:
             return self.contour_color
 
-        x_r, y_r, width, height = self.getBbox()
+        self.contour_color = get_color(self._cropped)
 
-        reference_pos_x, reference_pos_y = (x_r + (width // 2), y_r + (height // 2))
-        hsv_px = self._og_frame[reference_pos_y, reference_pos_x]
-        self.contour_color = " "
-        if 0 <= hsv_px[1] < 45:
-            self.contour_color = "White"
-
-        if 0 < hsv_px[0] < 5 or 170 < hsv_px[0] <= 179:
-            self.contour_color = "RED"
-
-        if 7 < hsv_px[0] < 20:
-            self.contour_color = "Orange"
-
-        if 20 < hsv_px[0] < 55:
-            self.contour_color = "Yellow"
-
-        if 55 < hsv_px[0] < 85:
-            self.contour_color = "Green"
-
-        if 85 < hsv_px[0] < 115:
-            self.contour_color = "Blue"
         return self.contour_color
 
     def __str__(self):
