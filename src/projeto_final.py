@@ -2,20 +2,26 @@ import cv2
 from rubik_tracker.RubikCustomContour import RubikCustomContour
 from rubik_tracker.RubikCube import RubikCube
 from rubik_tracker.RubikPiece import RubikPiece
-from utils import apply_canny_detection, dilate_contours
+from utils import (
+    apply_canny_detection,
+    dilate_contours,
+    simplify_solve_string,
+    draw_instruction,
+)
 import sys
 import time
 import numpy as np
 
 if __name__ == "__main__":
 
-    cv2.namedWindow("Blurred", cv2.WINDOW_FREERATIO)
+    # cv2.namedWindow("Blurred", cv2.WINDOW_FREERATIO)
+    # cv2.namedWindow("Canny", cv2.WINDOW_FREERATIO)
+    # cv2.namedWindow("dilated", cv2.WINDOW_FREERATIO)
+    # cv2.namedWindow("eroded", cv2.WINDOW_FREERATIO)
+    # cv2.namedWindow("hsv", cv2.WINDOW_FREERATIO)
     cv2.namedWindow("video", cv2.WINDOW_FREERATIO)
-    cv2.namedWindow("Canny", cv2.WINDOW_FREERATIO)
-    cv2.namedWindow("dilated", cv2.WINDOW_FREERATIO)
-    cv2.namedWindow("eroded", cv2.WINDOW_FREERATIO)
-    cv2.namedWindow("hsv", cv2.WINDOW_FREERATIO)
 
+    idx = 0
     cube = RubikCube()
     try:
         # capture = cv2.VideoCapture("src\\20241128_111931.mp4")
@@ -69,7 +75,7 @@ if __name__ == "__main__":
         cv2.imshow("video", frame)
         hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        cv2.imshow("hsv", hsv_frame)
+        # cv2.imshow("hsv", hsv_frame)
 
         canny = apply_canny_detection(frame)
         dilated_canny = dilate_contours(canny)
@@ -82,8 +88,8 @@ if __name__ == "__main__":
             hierarchy = [[]]
         custom_contours = []
         indices = range(len(contours) + 1)
-        for idx, contour, h in zip(indices, contours, hierarchy[0]):
-            c_c = RubikCustomContour(contour, h, idx, hsv_frame)
+        for i, contour, h in zip(indices, contours, hierarchy[0]):
+            c_c = RubikCustomContour(contour, h, i, hsv_frame)
             custom_contours.append(c_c)
 
         """
@@ -137,8 +143,53 @@ if __name__ == "__main__":
         frame = cube.show_state(frame)
 
         if solve_string is None:
-            frame = cv2.putText(frame, "Invalid Cube string", (10,40), cv2.FONT_HERSHEY_PLAIN, 2, (255,255,255), thickness=2, lineType=cv2.LINE_AA)
-            cv2.imshow("video", frame)
+            frame = cv2.putText(
+                frame,
+                "Invalid Cube string",
+                (10, 60),
+                cv2.FONT_HERSHEY_PLAIN,
+                2,
+                (255, 255, 255),
+                thickness=2,
+                lineType=cv2.LINE_AA,
+            )
+            idx = 0
+        elif solve_string == "":
+            frame = cv2.putText(
+                frame,
+                "Scan your Cube",
+                (10, 60),
+                cv2.FONT_HERSHEY_PLAIN,
+                2,
+                (255, 255, 255),
+                thickness=2,
+                lineType=cv2.LINE_AA,
+            )
+            idx = 0
+        elif len(solve_string) > 0 and idx < len(solve_string):
+            frame = cv2.putText(
+                frame,
+                f"Instruction: {idx}",
+                (10, 60),
+                cv2.FONT_HERSHEY_PLAIN,
+                2,
+                (255, 255, 255),
+                thickness=2,
+                lineType=cv2.LINE_AA,
+            )
+            draw_instruction(solve_string[idx], frame)
+        elif len(solve_string) > 0 and idx >= len(solve_string):
+            frame = cv2.putText(
+                frame,
+                "Should be solved now. : )",
+                (10, 60),
+                cv2.FONT_HERSHEY_PLAIN,
+                2,
+                (255, 255, 255),
+                thickness=2,
+                lineType=cv2.LINE_AA,
+            )
+
         cv2.imshow("video", frame)
         ret, frame = capture.read()
 
@@ -147,6 +198,9 @@ if __name__ == "__main__":
             k = chr(cv2.waitKey(1))
         except:
             pass
+
+        if k == "n":
+            idx += 1
         if k == "f":
             print("Save Front Face: ")
             print(len(saved_candidates))
@@ -189,6 +243,9 @@ if __name__ == "__main__":
         if k == "s":
             solve_string = cube.solve()
             print(solve_string)
+            if solve_string is not None and solve_string != "":
+                solve_string = simplify_solve_string(solve_string).split()
+                idx = 0
 
         if k == "q":
             cv2.destroyAllWindows()
