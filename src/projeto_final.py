@@ -28,9 +28,9 @@ if __name__ == "__main__":
         # capture = cv2.VideoCapture("./src/20241128_111931.mp4")
         # capture = cv2.VideoCapture("./20241123_182441.mp4")
         # capture = cv2.VideoCapture("src\\20241123_182441.mp4")
-        capture = cv2.VideoCapture(0)
+        #capture = cv2.VideoCapture(0)
         # capture = cv2.VideoCapture("http://192.168.1.68:4747/video")
-        #capture = cv2.VideoCapture("http://192.168.1.86:4747/video")
+        capture = cv2.VideoCapture("http://192.168.1.86:4747/video")
         #capture = cv2.VideoCapture("http://192.168.117.130:4747/video")
         #capture = cv2.VideoCapture("http://192.168.13.171:4747/video")
 
@@ -130,13 +130,13 @@ if __name__ == "__main__":
             valid_candidates = []
             for i in range(len(valid_candidates_copy)):
                 if not (
-                    valid_candidates_copy[i].get_area() < (avg * 5) / 8
-                    or valid_candidates_copy[i].get_area() > 14 / 10 * avg
+                    valid_candidates_copy[i].get_area() < (avg * 7) / 8
+                    or valid_candidates_copy[i].get_area() > 12 / 10 * avg
                 ):
                     valid_candidates.append(valid_candidates_copy[i])
             valid_candidates_copy = []
 
-        if solve_string != None and solve_string != "":
+        if solve_string == "":
             if len(valid_candidates) == 9:
                 saved_candidates = valid_candidates.copy()
 
@@ -253,6 +253,8 @@ if __name__ == "__main__":
         if k == "c":
             solve_string = ""
             cube = RubikCube()
+            saved_candidates = []
+            idx = 0
         if k == "q":
             cv2.destroyAllWindows()
             sys.exit(0)
