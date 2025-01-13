@@ -28,9 +28,12 @@ if __name__ == "__main__":
         # capture = cv2.VideoCapture("./src/20241128_111931.mp4")
         # capture = cv2.VideoCapture("./20241123_182441.mp4")
         # capture = cv2.VideoCapture("src\\20241123_182441.mp4")
-        # capture = cv2.VideoCapture(0)
+        capture = cv2.VideoCapture(0)
         # capture = cv2.VideoCapture("http://192.168.1.68:4747/video")
-        capture = cv2.VideoCapture("http://192.168.1.86:4747/video")
+        #capture = cv2.VideoCapture("http://192.168.1.86:4747/video")
+        #capture = cv2.VideoCapture("http://192.168.117.130:4747/video")
+        #capture = cv2.VideoCapture("http://192.168.13.171:4747/video")
+
         # capture = cv2.VideoCapture("http://192.168.241.75:4747/video")
 
         # capture.set(cv2.CAP_PROP_FPS, 15)
@@ -133,12 +136,13 @@ if __name__ == "__main__":
                     valid_candidates.append(valid_candidates_copy[i])
             valid_candidates_copy = []
 
-        if len(valid_candidates) == 9:
-            saved_candidates = valid_candidates.copy()
+        if solve_string != None and solve_string != "":
+            if len(valid_candidates) == 9:
+                saved_candidates = valid_candidates.copy()
 
-        for v_c in saved_candidates:
-            v_c.draw_candidate(frame, color=(0, 255, 255), thickness=2)
-            v_c.show_color(frame, color=(255, 100, 100))
+            for v_c in saved_candidates:
+                v_c.draw_candidate(frame, color=(0, 255, 255), thickness=2)
+                v_c.show_color(frame, color=(255, 100, 100))
 
         frame = cube.show_state(frame)
 
@@ -246,7 +250,9 @@ if __name__ == "__main__":
             if solve_string is not None and solve_string != "":
                 solve_string = simplify_solve_string(solve_string).split()
                 idx = 0
-
+        if k == "c":
+            solve_string = ""
+            cube = RubikCube()
         if k == "q":
             cv2.destroyAllWindows()
             sys.exit(0)

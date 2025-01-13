@@ -43,7 +43,7 @@ def get_color(roi):
     # Classify based on HSV thresholds
     if s < 50 and v > 200:
         return "White"
-    elif 0 <= h <= 7 or 170 <= h <= 179:
+    elif 0 <= h <= 10 or 170 <= h <= 179:
         return "Red"
     elif 11 <= h <= 18:
         return "Orange"
