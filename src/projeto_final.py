@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
             for v_c in saved_candidates:
                 v_c.draw_candidate(frame, color=(0, 255, 255), thickness=2)
-                v_c.show_color(frame, color=(255, 100, 100))
+                v_c.show_color(frame, color=(255, 255, 255))
 
         frame = cube.show_state(frame)
 

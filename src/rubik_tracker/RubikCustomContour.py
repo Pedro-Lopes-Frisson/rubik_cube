@@ -149,7 +149,7 @@ class RubikCustomContour:
 
     def show_color(self, image, color):
         x, y, w, h = self.getBbox()
-        origin = (x + w // 2, y + h // 2)
+        origin = (x - 60, y + h // 2)
 
         return cv2.putText(
             image,
@@ -159,7 +159,7 @@ class RubikCustomContour:
             color=color,
             thickness=2,
             lineType=cv2.LINE_AA,
-            fontScale=1,
+            fontScale=2,
         )
 
     def show_contour(self):
