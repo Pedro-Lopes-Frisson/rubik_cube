@@ -29,10 +29,11 @@ if __name__ == "__main__":
         # capture = cv2.VideoCapture("./20241123_182441.mp4")
         # capture = cv2.VideoCapture("src\\20241123_182441.mp4")
         #capture = cv2.VideoCapture(0)
-        # capture = cv2.VideoCapture("http://192.168.1.68:4747/video")
+        #capture = cv2.VideoCapture("http://192.168.1.68:4747/video")
         capture = cv2.VideoCapture("http://192.168.1.86:4747/video")
         #capture = cv2.VideoCapture("http://192.168.117.130:4747/video")
         #capture = cv2.VideoCapture("http://192.168.13.171:4747/video")
+        #capture = cv2.VideoCapture("http://192.168.72.137:4747/video")
 
         # capture = cv2.VideoCapture("http://192.168.241.75:4747/video")
 
